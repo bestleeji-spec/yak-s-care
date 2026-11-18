@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yak-S Care | 맞춤 약선 차 추천기</title>
+  <style>
+    :root {
+      --green-900: #1f3d2b;
+      --green-700: #2f5d3f;
+      --green-500: #4f8a5b;
+      --green-100: #e4efe2;
+      --beige-50:  #fbf8f1;
+      --beige-100: #f4ede0;
+      --beige-300: #e3d5bc;
+      --brown-500: #8a6a45;
+      --text:      #2b2b26;
+      --muted:     #6f6a5f;
+      --danger:    #b5523b;
+      --radius:    18px;
+      --shadow:    0 6px 24px rgba(47, 93, 63, 0.10);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+      background: linear-gradient(180deg, var(--beige-100) 0%, var(--beige-50) 320px);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 16px 60px;
+    }
+
+    /* ---------- Header ---------- */
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    header h1 {
+      font-size: 2.2rem;
+      color: var(--green-900);
+      letter-spacing: -0.5px;
+    }
+    header p {
+      margin-top: 6px;
+      color: var(--brown-500);
+      font-size: 1rem;
+    }
+
+    /* ---------- Card ---------- */
+    .card {
+      background: #fff;
+      border: 1px solid var(--beige-300);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: 1.15rem;
+      color: var(--green-700);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .count {
+      margin-left: auto;
+      font-size: 0.85rem;
+      background: var(--green-100);
+      color: var(--green-700);
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+
+    /* ---------- Symptom buttons ---------- */
+    .symptoms {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .symptom-btn {
+      border: 1.5px solid var(--beige-300);
+      background: var(--beige-50);
+      border-radius: 14px;
+      padding: 14px 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      font-family: inherit;
+    }
+    .symptom-btn .emoji { display: block; font-size: 1.5rem; margin-bottom: 4px; }
+    .symptom-btn:hover { border-color: var(--green-500); transform: translateY(-2px); }
+    .symptom-btn.active {
+      background: var(--green-100);
+      border-color: var(--green-500);
+      color: var(--green-900);
+      font-weight: 700;
+    }
+
+    /* ---------- Primary buttons ---------- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.18s ease, transform 0.1s ease, opacity 0.18s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--green-700); color: #fff; width: 100%; }
+    .btn-primary:hover:not(:disabled) { background: var(--green-900); }
+    .btn-save { background: var(--brown-500); color: #fff; }
+    .btn-save:hover:not(:disabled) { background: #6f5435; }
+    .btn-ghost { background: var(--beige-100); color: var(--green-700); }
+    .btn-ghost:hover { background: var(--beige-300); }
+
+    /* ---------- Result ---------- */
+    #resultCard { display: none; animation: fadeUp 0.35s ease; }
+    #resultCard.show { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .tea-tag {
+      display: inline-block;
+      font-size: 0.8rem;
+      background: var(--green-100);
+      color: var(--green-700);
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    .tea-name {
+      font-size: 1.6rem;
+      color: var(--green-900);
+      font-weight: 800;
+    }
+    .tea-hanja { color: var(--muted); font-size: 1rem; font-weight: 400; margin-left: 6px; }
+    .tea-source {
+      margin-top: 4px;
+      color: var(--brown-500);
+      font-size: 0.9rem;
+    }
+    .tea-section { margin-top: 16px; }
+    .tea-section h3 {
+      font-size: 0.9rem;
+      color: var(--green-700);
+      margin-bottom: 4px;
+    }
+    .ingredients { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ingredients span {
+      background: var(--beige-100);
+      border: 1px solid var(--beige-300);
+      border-radius: 8px;
+      padding: 3px 10px;
+      font-size: 0.88rem;
+    }
+    .caution {
+      margin-top: 16px;
+      background: #fdf3ef;
+      border-left: 4px solid var(--danger);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: #7a3a2a;
+    }
+    .result-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .result-actions .btn { flex: 1; }
+
+    /* ---------- Saved list ---------- */
+    #savedList { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .saved-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--beige-50);
+      border: 1px solid var(--beige-300);
+      border-radius: 14px;
+      padding: 12px 14px;
+      animation: fadeUp 0.25s ease;
+    }
+    .saved-item .icon { font-size: 1.6rem; }
+    .saved-item .info { flex: 1; min-width: 0; }
+    .saved-item .name { font-weight: 700; color: var(--green-900); }
+    .saved-item .meta { font-size: 0.82rem; color: var(--muted); }
+    .saved-item .desc {
+      font-size: 0.86rem;
+      color: var(--text);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .btn-delete {
+      background: transparent;
+      border: 1.5px solid var(--danger);
+      color: var(--danger);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .btn-delete:hover { background: var(--danger); color: #fff; }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 24px 10px;
+      font-size: 0.95rem;
+    }
+    .empty .big { font-size: 2.2rem; display: block; margin-bottom: 6px; }
+
+    .clear-all {
+      margin-top: 14px;
+      width: 100%;
+      font-size: 0.9rem;
+      padding: 10px;
+    }
+
+    /* ---------- Toast ---------- */
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--green-900);
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      z-index: 10;
+      max-width: calc(100% - 32px);
+      text-align: center;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 30px;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 520px) {
+      .container { padding-top: 28px; }
+      header h1 { font-size: 1.8rem; }
+      .card { padding: 18px; }
+      .symptoms { grid-template-columns: repeat(2, 1fr); }
+      .tea-name { font-size: 1.35rem; }
+      .result-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🌱 Yak-S Care</h1>
+      <p>고조리서 기반 맞춤 약선 차 추천 및 찜하기</p>
+    </header>
+
+    <!-- 1. 증상 선택 -->
+    <section class="card">
+      <h2>🍃 오늘 나의 상태는?</h2>
+      <div class="symptoms" id="symptomButtons"></div>
+      <button class="btn btn-primary" id="recommendBtn" disabled>
+        🔍 맞춤 약선 처방 확인하기
+      </button>
+    </section>
+
+    <!-- 2. 추천 결과 -->
+    <section class="card" id="resultCard">
+      <div id="resultContent"></div>
+      <div class="result-actions">
+        <button class="btn btn-ghost" id="nextBtn">🔄 다른 처방 보기</button>
+        <button class="btn btn-save" id="saveBtn">💚 이 처방 찜하기</button>
+      </div>
+    </section>
+
+    <!-- 3. 찜 보관함 -->
+    <section class="card">
+      <h2>📦 나만의 찜한 약선 보관함 <span class="count" id="savedCount">0</span></h2>
+      <ul id="savedList"></ul>
+      <button class="btn btn-ghost clear-all" id="clearAllBtn" style="display:none;">🗑️ 전체 비우기</button>
+    </section>
+
+    <footer>
+      ※ 본 서비스는 교육용 실습 프로젝트이며, 의학적 진단·치료를 대신하지 않습니다.<br />
+      지병이 있거나 약을 복용 중이라면 전문가와 상담 후 섭취하세요.
+    </footer>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    // =========================================================
+    // 1. 데이터: 증상별 약선 차 (고조리서·전통 식치 문헌 참고)
+    // =========================================================
+    const SYMPTOMS = [
+      { id: "fatigue",   label: "피로회복",   emoji: "🔋" },
+      { id: "digest",    label: "소화불량",   emoji: "🍚" },
+      { id: "immune",    label: "면역력 강화", emoji: "🛡️" },
+      { id: "calm",      label: "마음 안정",   emoji: "🧘" },
+      { id: "cold",      label: "감기·목 건강", emoji: "🧣" },
+      { id: "sleep",     label: "숙면",       emoji: "🌙" }
+    ];
+
+    const TEAS = {
+      fatigue: [
+        {
+          name: "오미자차", hanja: "五味子茶",
+          source: "『식료찬요』의 식치(食治) 원리 · 『동의보감』 참고",
+          ingredients: ["오미자", "꿀"],
+          effect: "다섯 가지 맛을 지닌 오미자는 예로부터 기운을 거두고 진액을 보충해 지친 몸을 깨운다고 전해집니다. 땀을 많이 흘려 기력이 떨어졌을 때 마시던 여름 음청류입니다.",
+          recipe: "오미자 20g을 찬물 500ml에 하룻밤 우려낸 뒤 꿀을 타서 마십니다. (끓이면 쓴맛이 강해집니다)",
+          caution: "위산이 많거나 속쓰림이 잦은 분은 연하게 드세요."
+        },
+        {
+          name: "대추생강차", hanja: "大棗生薑茶",
+          source: "『식료찬요』 허로(虛勞) 식치 원리 참고",
+          ingredients: ["대추", "생강", "꿀"],
+          effect: "대추는 비위를 보하고 기운을 북돋으며, 생강은 몸을 따뜻하게 하여 순환을 돕습니다. 몸이 무겁고 쉽게 지칠 때 좋은 조합입니다.",
+          recipe: "씨를 뺀 대추 10알과 얇게 저민 생강 3쪽을 물 1L에 넣고 약불에서 30분 달입니다.",
+          caution: "열이 많거나 얼굴이 쉽게 붉어지는 체질은 생강 양을 줄이세요."
+        }
+      ],
+      digest: [
+        {
+          name: "진피차", hanja: "陳皮茶",
+          source: "『식료찬요』 비위(脾胃) 식치 원리 · 『임원경제지』 참고",
+          ingredients: ["말린 귤껍질(진피)", "꿀"],
+          effect: "오래 묵힌 귤껍질인 진피는 기의 흐름을 원활하게 하고 더부룩한 속을 풀어준다고 전해집니다. 식후 답답함과 가스가 찰 때 마셨습니다.",
+          recipe: "진피 10g을 물 500ml에 넣고 10~15분 끓인 뒤 꿀을 약간 넣어 마십니다.",
+          caution: "농약 걱정이 없는 귤껍질을 깨끗이 씻어 말려 사용하세요."
+        },
+        {
+          name: "매실차", hanja: "梅實茶",
+          source: "『식료찬요』의 식치 원리 · 『규합총서』 음청류 참고",
+          ingredients: ["매실청", "따뜻한 물"],
+          effect: "매실의 새콤한 맛은 침과 위액 분비를 도와 소화를 돕고, 체기를 내려준다고 하여 민간에서 널리 쓰였습니다.",
+          recipe: "매실청 2큰술을 따뜻한 물 200ml에 타서 식후에 마십니다.",
+          caution: "당분이 많으므로 하루 1~2잔이 적당합니다."
+        }
+      ],
+      immune: [
+        {
+          name: "황기차", hanja: "黃芪茶",
+          source: "『식료찬요』 허약(虛弱) 식치 원리 · 『동의보감』 참고",
+          ingredients: ["황기", "대추"],
+          effect: "황기는 겉의 기운(위기, 衛氣)을 튼튼히 하여 외부 사기로부터 몸을 지킨다고 전해집니다. 잦은 감기와 식은땀에 쓰였습니다.",
+          recipe: "황기 15g과 대추 5알을 물 1L에 넣고 약불에서 40분 정도 달여 나누어 마십니다.",
+          caution: "열감이 있는 급성 감기 중에는 섭취를 피하세요."
+        },
+        {
+          name: "구기자차", hanja: "枸杞子茶",
+          source: "『식료찬요』의 식치 원리 · 『산가요록』 참고",
+          ingredients: ["구기자", "대추"],
+          effect: "구기자는 간과 신장을 보하고 정기를 채워 몸의 기초 체력을 길러준다고 하여 장수 차로 사랑받았습니다.",
+          recipe: "구기자 15g을 가볍게 볶아 물 1L에 넣고 20~30분 끓여 마십니다.",
+          caution: "설사가 잦은 분은 소량부터 시작하세요."
+        }
+      ],
+      calm: [
+        {
+          name: "대추감초차", hanja: "大棗甘草茶",
+          source: "『식료찬요』 심신(心神) 식치 원리 참고",
+          ingredients: ["대추", "감초", "소맥(밀)"],
+          effect: "대추와 감초, 밀을 함께 달인 차는 예부터 마음이 불안하고 쉽게 서글퍼질 때 마음을 다독이는 처방으로 전해집니다.",
+          recipe: "대추 7알, 감초 5g, 통밀 한 줌을 물 1L에 넣고 30분 달여 마십니다.",
+          caution: "감초는 장기간 과량 섭취 시 부종이 생길 수 있어 고혈압이 있다면 주의하세요."
+        },
+        {
+          name: "국화차", hanja: "菊花茶",
+          source: "『식료찬요』의 식치 원리 · 『임원경제지』 참고",
+          ingredients: ["감국(말린 국화)"],
+          effect: "국화는 머리와 눈을 맑게 하고 위로 치솟는 열을 내려 예민하고 답답한 마음을 가라앉혀 준다고 전해집니다.",
+          recipe: "말린 국화 5~6송이를 80℃ 물에 3분간 우려 마십니다.",
+          caution: "몸이 찬 분은 대추 1~2알을 함께 넣어 드세요."
+        }
+      ],
+      cold: [
+        {
+          name: "모과차", hanja: "木瓜茶",
+          source: "『식료찬요』 해수(咳嗽) 식치 원리 · 『규합총서』 참고",
+          ingredients: ["모과청", "따뜻한 물"],
+          effect: "모과는 목을 부드럽게 하고 가래와 기침을 가라앉히는 데 쓰여, 환절기 목이 칼칼할 때 즐겨 마시던 차입니다.",
+          recipe: "모과청 2큰술을 따뜻한 물 200ml에 타서 천천히 마십니다.",
+          caution: "당 섭취를 조절해야 하는 분은 양을 줄이세요."
+        },
+        {
+          name: "생강파뿌리차", hanja: "生薑蔥白茶",
+          source: "『식료찬요』 상한(傷寒) 식치 원리 참고",
+          ingredients: ["생강", "파뿌리(총백)", "흑설탕"],
+          effect: "생강과 파 흰 뿌리는 몸을 따뜻하게 하고 땀을 내어 초기 으슬으슬한 감기 기운을 풀어준다고 전해집니다.",
+          recipe: "생강 3쪽과 깨끗이 씻은 파뿌리 3개를 물 500ml에 넣고 15분 끓여 따뜻하게 마십니다.",
+          caution: "고열이 지속되면 반드시 병원 진료를 받으세요."
+        }
+      ],
+      sleep: [
+        {
+          name: "산조인차", hanja: "酸棗仁茶",
+          source: "『식료찬요』 불면(不眠) 식치 원리 · 『동의보감』 참고",
+          ingredients: ["산조인(멧대추씨)", "대추"],
+          effect: "볶은 산조인은 마음을 편안히 하고 잠을 이루게 돕는다고 하여, 생각이 많아 잠들기 어려울 때 쓰였습니다.",
+          recipe: "볶은 산조인 10g을 살짝 빻아 물 500ml에 넣고 20분 달여 잠들기 1시간 전 마십니다.",
+          caution: "임신 중이거나 수면제를 복용 중이라면 전문가와 상담하세요."
+        },
+        {
+          name: "연자육차", hanja: "蓮子肉茶",
+          source: "『식료찬요』의 식치 원리 · 『임원경제지』 참고",
+          ingredients: ["연자육(연꽃 씨)", "대추"],
+          effect: "연꽃 씨는 심장과 비장을 함께 보하여 마음을 차분하게 하고 깊은 잠을 돕는다고 전해집니다.",
+          recipe: "연자육 15g(심 제거)을 물 1L에 넣고 30분 달여 마십니다.",
+          caution: "변비가 심한 분은 소량부터 드세요."
+        }
+      ]
+    };
+
+    // =========================================================
+    // 2. 상태 & localStorage 유틸
+    // =========================================================
+    const STORAGE_KEY = "yakSCare.favorites";
+    let selectedSymptom = null;
+    let teaIndex = 0;
+    let currentTea = null;
+
+    function loadFavorites() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const data = raw ? JSON.parse(raw) : [];
+        return Array.isArray(data) ? data : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveFavorites(list) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        return true;
+      } catch (e) {
+        showToast("⚠️ 브라우저 저장소를 사용할 수 없습니다.");
+        return false;
+      }
+    }
+
+    // XSS 방지용 이스케이프 (localStorage 값은 사용자가 수정할 수 있음)
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    // =========================================================
+    // 3. DOM 참조
+    // =========================================================
+    const $symptomButtons = document.getElementById("symptomButtons");
+    const $recommendBtn   = document.getElementById("recommendBtn");
+    const $resultCard     = document.getElementById("resultCard");
+    const $resultContent  = document.getElementById("resultContent");
+    const $nextBtn        = document.getElementById("nextBtn");
+    const $saveBtn        = document.getElementById("saveBtn");
+    const $savedList      = document.getElementById("savedList");
+    const $savedCount     = document.getElementById("savedCount");
+    const $clearAllBtn    = document.getElementById("clearAllBtn");
+    const $toast          = document.getElementById("toast");
+
+    // =========================================================
+    // 4. 렌더링
+    // =========================================================
+    function renderSymptomButtons() {
+      $symptomButtons.innerHTML = SYMPTOMS.map(s => `
+        <button class="symptom-btn" data-id="${s.id}">
+          <span class="emoji">${s.emoji}</span>${s.label}
+        </button>
+      `).join("");
+    }
+
+    function renderResult() {
+      const symptom = SYMPTOMS.find(s => s.id === selectedSymptom);
+      const t = currentTea;
+      $resultContent.innerHTML = `
+        <span class="tea-tag">${symptom.emoji} ${symptom.label} 맞춤 처방</span>
+        <div class="tea-name">🍵 ${t.name}<span class="tea-hanja">${t.hanja}</span></div>
+        <div class="tea-source">📜 ${t.source}</div>
+
+        <div class="tea-section">
+          <h3>🌿 재료</h3>
+          <div class="ingredients">${t.ingredients.map(i => `<span>${i}</span>`).join("")}</div>
+        </div>
+        <div class="tea-section">
+          <h3>✨ 효능</h3>
+          <p>${t.effect}</p>
+        </div>
+        <div class="tea-section">
+          <h3>🫖 달이는 법</h3>
+          <p>${t.recipe}</p>
+        </div>
+        <div class="caution">⚠️ ${t.caution}</div>
+      `;
+      $resultCard.classList.remove("show");
+      void $resultCard.offsetWidth; // 애니메이션 재시작
+      $resultCard.classList.add("show");
+      updateSaveButton();
+    }
+
+    function updateSaveButton() {
+      if (!currentTea) return;
+      const exists = loadFavorites().some(f => f.key === makeKey(selectedSymptom, currentTea.name));
+      $saveBtn.disabled = exists;
+      $saveBtn.textContent = exists ? "✅ 이미 찜한 처방" : "💚 이 처방 찜하기";
+    }
+
+    function renderFavorites() {
+      const list = loadFavorites();
+      $savedCount.textContent = list.length;
+      $clearAllBtn.style.display = list.length ? "flex" : "none";
+
+      if (list.length === 0) {
+        $savedList.innerHTML = `
+          <li class="empty">
+            <span class="big">🫙</span>
+            아직 찜한 약선 차가 없어요.<br />나에게 맞는 처방을 찾아 찜해 보세요!
+          </li>`;
+        return;
+      }
+
+      $savedList.innerHTML = list.map(f => `
+        <li class="saved-item">
+          <span class="icon">🍵</span>
+          <div class="info">
+            <div class="name">${escapeHTML(f.name)} <small style="color:var(--muted);font-weight:400;">${escapeHTML(f.hanja || "")}</small></div>
+            <div class="meta">${escapeHTML(f.symptomLabel)} · ${escapeHTML(f.savedAt)}</div>
+            <div class="desc">${escapeHTML(f.effect)}</div>
+          </div>
+          <button class="btn-delete" data-key="${escapeHTML(f.key)}">삭제</button>
+        </li>
+      `).join("");
+    }
+
+    function showToast(msg) {
+      $toast.textContent = msg;
+      $toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => $toast.classList.remove("show"), 1800);
+    }
+
+    function makeKey(symptomId, teaName) {
+      return `${symptomId}::${teaName}`;
+    }
+
+    // =========================================================
+    // 5. 이벤트
+    // =========================================================
+    // 증상 선택
+    $symptomButtons.addEventListener("click", e => {
+      const btn = e.target.closest(".symptom-btn");
+      if (!btn) return;
+      document.querySelectorAll(".symptom-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedSymptom = btn.dataset.id;
+      teaIndex = 0;
+      $recommendBtn.disabled = false;
+    });
+
+    // 처방 확인
+    $recommendBtn.addEventListener("click", () => {
+      if (!selectedSymptom) return;
+      currentTea = TEAS[selectedSymptom][teaIndex];
+      renderResult();
+      $resultCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+
+    // 다른 처방 보기
+    $nextBtn.addEventListener("click", () => {
+      const teas = TEAS[selectedSymptom];
+      teaIndex = (teaIndex + 1) % teas.length;
+      currentTea = teas[teaIndex];
+      renderResult();
+    });
+
+    // 찜하기 → localStorage 저장
+    $saveBtn.addEventListener("click", () => {
+      if (!currentTea) return;
+      const list = loadFavorites();
+      const key = makeKey(selectedSymptom, currentTea.name);
+      if (list.some(f => f.key === key)) {
+        showToast("이미 보관함에 있는 처방이에요.");
+        return;
+      }
+      const symptom = SYMPTOMS.find(s => s.id === selectedSymptom);
+      list.unshift({
+        key,
+        name: currentTea.name,
+        hanja: currentTea.hanja,
+        effect: currentTea.effect,
+        symptomLabel: symptom.label,
+        savedAt: new Date().toLocaleString("ko-KR", {
+          year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+        })
+      });
+      if (saveFavorites(list)) {
+        renderFavorites();
+        updateSaveButton();
+        showToast(`💚 '${currentTea.name}'을(를) 보관함에 담았어요!`);
+      }
+    });
+
+    // 삭제 (이벤트 위임)
+    $savedList.addEventListener("click", e => {
+      const btn = e.target.closest(".btn-delete");
+      if (!btn) return;
+      const key = btn.dataset.key;
+      const list = loadFavorites();
+      const target = list.find(f => f.key === key);
+      if (saveFavorites(list.filter(f => f.key !== key))) {
+        renderFavorites();
+        updateSaveButton();
+        if (target) showToast(`🗑️ '${target.name}'을(를) 삭제했어요.`);
+      }
+    });
+
+    // 전체 비우기
+    $clearAllBtn.addEventListener("click", () => {
+      if (!confirm("보관함의 모든 처방을 삭제할까요?")) return;
+      if (saveFavorites([])) {
+        renderFavorites();
+        updateSaveButton();
+        showToast("보관함을 비웠어요.");
+      }
+    });
+
+    // 다른 탭에서 변경 시 동기화
+    window.addEventListener("storage", e => {
+      if (e.key === STORAGE_KEY) { renderFavorites(); updateSaveButton(); }
+    });
+
+    // =========================================================
+    // 6. 초기화
+    // =========================================================
+    renderSymptomButtons();
+    renderFavorites();
+  </script>
+</body>
+</html>
